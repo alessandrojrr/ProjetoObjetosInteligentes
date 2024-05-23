@@ -1,0 +1,131 @@
+
+
+endereço-https://wokwi.com/projects/398550303787431937
+código wowki
+
+#include <Arduino.h>
+#include <DHTesp.h>
+#include <EspMQTTClient.h>
+
+int led = 13;           // LED está conectado à porta D13 do ESP32
+int pirdata = 15;       // Sensor PIR está conectado à porta D15
+int pirstate = LOW;     // Estado inicial: sem movimento
+int value = 0;          // Para ler o estado do pino
+int contadorMovimento = 0; // Contador de movimento
+unsigned long startTime;  // Tempo de início para medir um minuto
+unsigned long waitStartTime; // Tempo de início do intervalo de espera
+int metaDeteccoes;        // Meta de detecções de movimento
+bool waiting = false;    // Indica se está no intervalo de espera
+bool conexaoEstabelecida = false; // Indica se a conexão com o broker MQTT foi estabelecida
+bool detectingCars = true; // Indica se estamos detectando carros ou pedestres
+
+// Definições e constantes MQTT
+char SSIDName[] = "Wokwi-GUEST"; // Nome da rede WiFi
+char SSIDPass[] = ""; // Senha da rede WiFI
+char BrokerURL[] = "broker.hivemq.com"; // URL do broker MQTT
+char BrokerUserName[] = ""; // Nome do usuário para autenticar no broker MQTT
+char BrokerPassword[] = ""; // Senha para autenticar no broker MQTT
+char MQTTClientName[] = "mqtt-mack-pub"; // Nome do cliente MQTT
+int BrokerPort = 1883; // Porta do broker MQTT
+
+String TopicoPrefixo = "TESTMACK104011578"; // Prefixo do tópico
+String TopicoMovimentoCarros = TopicoPrefixo + "/MovimentoCarros"; // Nome do tópico para movimento de carros
+String TopicoMovimentoPedestres = TopicoPrefixo + "/MovimentoPedestres"; // Nome do tópico para movimento de pedestres
+
+// Variáveis globais e objetos MQTT
+EspMQTTClient clienteMQTT(SSIDName, SSIDPass, BrokerURL, BrokerUserName, BrokerPassword, MQTTClientName, BrokerPort); // Inicializa o cliente MQTT
+
+// Prototipo de função
+void onConnectionEstablished() {
+  conexaoEstabelecida = true;
+}
+
+void setup() {
+  pinMode(led, OUTPUT);    // Configura o LED como saída
+  pinMode(pirdata, INPUT); // Configura o sensor PIR como entrada
+  Serial.begin(9600);
+  startTime = millis();    // Registra o tempo de início
+  
+  // Gere um número aleatório entre 20 e 35 para carros e 5 a 7 para pedestres
+  metaDeteccoes = random(20, 36);
+
+  // Configurações MQTT
+  clienteMQTT.enableDebuggingMessages(); // Habilita mensagens de debug no monitor serial
+  // clienteMQTT.enableHTTPWebUpdater(); // Enable the web updater
+  // clienteMQTT.enableOTA(); // Enable OTA (Over The Air) updates
+}
+
+void loop() {
+  unsigned long currentTime = millis();
+  unsigned long elapsedTime = currentTime - startTime;
+
+  if (waiting) {
+    // Se está no intervalo de espera, verifica se já passaram 30 segundos
+    if (currentTime - waitStartTime >= 5000) {
+      // Se passaram 30 segundos, sai do estado de espera e reinicializa para o próximo minuto
+      waiting = false;
+      startTime = currentTime;
+      contadorMovimento = 0;
+
+      // Alterna entre detecção de carros e pedestres
+      if (detectingCars) {
+        metaDeteccoes = random(8, 13); // Meta para pedestres
+      } else {
+        metaDeteccoes = random(25, 50); // Meta para carros
+      }
+      detectingCars = !detectingCars; // Alterna o modo de detecção
+    }
+  } else {
+    // Verifica se passou um minuto
+    if (elapsedTime >= 30000 && conexaoEstabelecida) {
+      if (detectingCars) {
+        Serial.print("Total de carros que passaram pelo semáforo em 30 segundos: ");
+        clienteMQTT.publish(TopicoMovimentoCarros, String(contadorMovimento));
+      } else {
+        Serial.print("Total de pedestres que passaram pelo semáforo 30 segundos: ");
+        clienteMQTT.publish(TopicoMovimentoPedestres, String(contadorMovimento));
+      }
+      Serial.println(contadorMovimento);
+      
+      // Inicia o intervalo de espera de 30 segundos
+      waitStartTime = currentTime;
+      waiting = true;
+    }
+
+    // Simula a detecção de movimento aleatória, mas só se ainda não atingiu a meta e a conexão estiver estabelecida
+    if (contadorMovimento < metaDeteccoes && conexaoEstabelecida) {
+      if (random(0, 100) < 10) { // 10% de chance de detectar movimento a cada iteração
+        value = HIGH;
+      } else {
+        value = LOW;
+      }
+
+      if (value == HIGH) {
+        if (pirstate == LOW) {
+          digitalWrite(led, HIGH);
+          if (detectingCars) {
+            Serial.print("Carro Detectado: ");
+            clienteMQTT.publish(TopicoMovimentoCarros, String(contadorMovimento + 1));
+          } else {
+            Serial.print("Pedestre Detectado: ");
+            clienteMQTT.publish(TopicoMovimentoPedestres, String(contadorMovimento + 1));
+          }
+          Serial.println(contadorMovimento + 1); // Incrementa o contador de movimento e imprime
+          contadorMovimento++; // Incrementa o contador de movimento
+          pirstate = HIGH;
+          delay(500); // LED aceso por 500 ms para indicar detecção
+          digitalWrite(led, LOW);
+        }
+      } else {
+        if (pirstate == HIGH) {
+          pirstate = LOW;
+        }
+      }
+    }
+  }
+
+  delay(100); // Pequeno atraso para simular a leitura do sensor e dar tempo para a próxima iteração
+
+  // Função necessária para manter a conexão com o broker MQTT ativa e coletar as mensagens recebidas
+  clienteMQTT.loop();
+}

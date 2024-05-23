@@ -1,0 +1,260 @@
+Código JSON, Node-red:
+[
+    {
+        "id": "aa9835cdcf17b524",
+        "type": "tab",
+        "label": "Fluxo 11",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "a4c36a991c5bf9e3",
+        "type": "mqtt in",
+        "z": "aa9835cdcf17b524",
+        "name": "Carros",
+        "topic": "TESTMACK104011578/MovimentoCarros",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "8c7e012198b91b86",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 450,
+        "y": 100,
+        "wires": [
+            [
+                "437c73763ac3f384",
+                "0959af5fdb7d433d"
+            ]
+        ]
+    },
+    {
+        "id": "9e7a6d7bf0b2f333",
+        "type": "influxdb out",
+        "z": "aa9835cdcf17b524",
+        "influxdb": "e76b9fda092fcee5",
+        "name": "influxDB",
+        "measurement": "MovimentoDosCarros",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "9a650d4dc39c7f49",
+        "bucket": "BucketDoTrabalho",
+        "x": 740,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "cfd1168cd9daebae",
+        "type": "mqtt in",
+        "z": "aa9835cdcf17b524",
+        "name": "Pedestres",
+        "topic": "TESTMACK104011578/MovimentoPedestres",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "8c7e012198b91b86",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 460,
+        "y": 320,
+        "wires": [
+            [
+                "d69a6f823421a8df",
+                "1708c0102d2d887f"
+            ]
+        ]
+    },
+    {
+        "id": "437c73763ac3f384",
+        "type": "function",
+        "z": "aa9835cdcf17b524",
+        "name": "function 5",
+        "func": "var mensagem1 = msg.payload;\nmsg.payload =  mensagem1;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 200,
+        "wires": [
+            [
+                "9e7a6d7bf0b2f333"
+            ]
+        ]
+    },
+    {
+        "id": "d69a6f823421a8df",
+        "type": "function",
+        "z": "aa9835cdcf17b524",
+        "name": "function 6",
+        "func": "var mensagem3 = msg.payload;\nmsg.payload = mensagem3;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 260,
+        "wires": [
+            [
+                "36aa384773c0dc82"
+            ]
+        ]
+    },
+    {
+        "id": "9f8816276b86b833",
+        "type": "debug",
+        "z": "aa9835cdcf17b524",
+        "name": "debug 11",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1060,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "cae7c80dcef3da00",
+        "type": "node-red-contrib-whatsapp-cmb-send-message",
+        "z": "aa9835cdcf17b524",
+        "name": "nó whatsapp",
+        "credtype": "account",
+        "account": "ce0880a26cad4d38",
+        "text": "payload",
+        "phonenumbervalue": "",
+        "apikeyvalue": "",
+        "apikeyinputtypemessage": "msg",
+        "phonenumberinputtypemessage": "msg",
+        "inputtypemessage": "msg",
+        "rejectssl": false,
+        "x": 910,
+        "y": 220,
+        "wires": [
+            [
+                "9f8816276b86b833"
+            ]
+        ]
+    },
+    {
+        "id": "0959af5fdb7d433d",
+        "type": "function",
+        "z": "aa9835cdcf17b524",
+        "name": "function 7",
+        "func": "\nvar mensagem2 = msg.payload;\nmsg.payload = \"Carros dectados: \" + mensagem2;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 920,
+        "y": 40,
+        "wires": [
+            [
+                "cae7c80dcef3da00"
+            ]
+        ]
+    },
+    {
+        "id": "1708c0102d2d887f",
+        "type": "function",
+        "z": "aa9835cdcf17b524",
+        "name": "function 8",
+        "func": "var mensagem4 = msg.payload;\nmsg.payload = \"Pedestres dectados: \" + mensagem4;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 480,
+        "wires": [
+            [
+                "cae7c80dcef3da00"
+            ]
+        ]
+    },
+    {
+        "id": "36aa384773c0dc82",
+        "type": "influxdb out",
+        "z": "aa9835cdcf17b524",
+        "influxdb": "e76b9fda092fcee5",
+        "name": "influxDB2",
+        "measurement": "MovimentoDosPedestres",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "9a650d4dc39c7f49",
+        "bucket": "BucketDoTrabalho",
+        "x": 720,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "8c7e012198b91b86",
+        "type": "mqtt-broker",
+        "name": "Movimento",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "e76b9fda092fcee5",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": "8086",
+        "protocol": "http",
+        "database": "database",
+        "name": "influxDB2",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "https://us-east-1-1.aws.cloud2.influxdata.com",
+        "timeout": "10",
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "ce0880a26cad4d38",
+        "type": "node-red-contrib-whatsapp-cmb-account",
+        "name": "nó whastapp"
+    }
+]
